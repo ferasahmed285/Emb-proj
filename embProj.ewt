@@ -2844,7 +2844,4 @@
     <file>
         <name>$PROJ_DIR$\main.c</name>
     </file>
-    <file>
-        <name>$PROJ_DIR$\startup_ewarm.c</name>
-    </file>
 </project>
