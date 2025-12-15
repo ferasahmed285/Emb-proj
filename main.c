@@ -36,7 +36,7 @@
  * Date: December 10, 2025
  *
  * Configuration:
- *   - UART0: 115200 baud, 8N1
+ *   - UART3: 115200 baud, 8N1 (PC6: RX, PC7: TX)
  *   - RGB LED on Port F (PF1: Red, PF2: Blue, PF3: Green)
  *   - LCD on Port B
  *
