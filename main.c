@@ -85,7 +85,7 @@ int main(void)
 
   /* Initialize peripherals */
   SysTick_Init(16000, SYSTICK_NOINT); /* Initialize system tick timer */
-  UART0_Init();                       /* Initialize UART0 at 115200 baud (TivaWare) */
+  UART_Init();                        /* Initialize UART3 at 115200 baud (TivaWare) */
   LED_Init();                         /* Initialize RGB LED on Port F */
   LCD_Init();                         /* Initialize LCD */
 
@@ -97,19 +97,19 @@ int main(void)
   LCD_WriteString("TivaWare Ready");
 
   /* Send welcome message to PuTTY */
-  UART0_SendString("\r\n*** TivaC UART LED Control Demo (TivaWare) ***\r\n");
-  UART0_SendString("Commands: R G B P Y C W O\r\n");
-  UART0_SendString("Ready to receive commands...\r\n\r\n");
+  UART_SendString("\r\n*** TivaC UART LED Control Demo (TivaWare) ***\r\n");
+  UART_SendString("Commands: R G B P Y C W O\r\n");
+  UART_SendString("Ready to receive commands...\r\n\r\n");
 
   /* Main loop */
   while (1)
   {
     /* Wait for a character from UART */
-    receivedChar = UART0_ReceiveChar();
+    receivedChar = UART_ReceiveChar();
 
     /* Echo the character back to PuTTY */
-    UART0_SendChar(receivedChar);
-    UART0_SendString("\r\n"); /* New line for better readability */
+    UART_SendChar(receivedChar);
+    UART_SendString("\r\n"); /* New line for better readability */
 
     /* Convert to uppercase if lowercase */
     if (receivedChar >= 'a' && receivedChar <= 'z')
