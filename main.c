@@ -30,31 +30,28 @@
 // #if 0
 /******************************************************************************
  * File: main.c
- * Project: UART LED Color Control Demo (TivaWare Version)
- * Description: TivaC receives color commands via UART from PuTTY and controls
- *              RGB LED accordingly. Commands are echoed back and displayed on LCD.
+ * Project: UART1 Control Demo (TivaWare Version)
+ * Description: TivaC receives commands via UART1 and controls buzzer and RGB LED.
  *              This version uses TivaWare peripheral driver library.
  * Author: Ahmedhh
  * Date: December 10, 2025
  *
  * Configuration:
- *   - UART3: 115200 baud, 8N1 (PC6: RX, PC7: TX)
+ *   - UART17: 115200 baud, 8N1 (PE0: RX, PE1: TX)
  *   - RGB LED on Port F (PF1: Red, PF2: Blue, PF3: Green)
+ *   - Buzzer on PA3
  *
  * Commands:
- *   R - Red
- *   G - Green
- *   B - Blue
- *   P - Purple (Red + Blue)
- *   Y - Yellow (Red + Green)
- *   C - Cyan (Blue + Green)
- *   W - White (Red + Blue + Green)
- *   O - Off (All LEDs off)
+ *   A - Buzzer beep (1 second)
+ *   B - Blue LED (1 second)
+ *   C - Red LED (1 second)
+ *   D - Green LED (1 second)
  ******************************************************************************/
 
-#include "uart.h"
+#include "UART.h"
 #include "dio.h"
 #include "systick.h"
+#include "buzzer.h"
 #include <stdint.h>
 
 /******************************************************************************
@@ -72,7 +69,6 @@
  ******************************************************************************/
 
 void LED_Init(void);
-void LED_SetColor(char command);
 
 /******************************************************************************
  *                              Main Function                                  *
@@ -84,32 +80,55 @@ int main(void)
 
   /* Initialize peripherals */
   SysTick_Init(16000, SYSTICK_NOINT); /* Initialize system tick timer */
-  UART_Init();                        /* Initialize UART3 at 115200 baud (TivaWare) */
+  UART1_Init();                       /* Initialize UART13 at 115200 baud (TivaWare) */
   LED_Init();                         /* Initialize RGB LED on Port F */
+  enable_buzzer();                    /* Initialize Buzzer on PA3 */
 
   /* Send welcome message to PuTTY */
-  UART_SendString("\r\n*** TivaC UART LED Control Demo (TivaWare) ***\r\n");
-  UART_SendString("Commands: R G B P Y C W O\r\n");
-  UART_SendString("Ready to receive commands...\r\n\r\n");
+  UART1_SendString("\r\n*** TivaC UART1 Control Demo (TivaWare) ***\r\n");
+  UART1_SendString("Commands: A=Buzzer, B=Blue, C=Red, D=Green\r\n");
+  UART1_SendString("Ready to receive commands...\r\n\r\n");
 
   /* Main loop */
   while (1)
   {
-    /* Wait for a character from UART */
-    receivedChar = UART_ReceiveChar();
-
-    /* Echo the character back to PuTTY */
-    UART_SendChar(receivedChar);
-    UART_SendString("\r\n"); /* New line for better readability */
-
-    /* Convert to uppercase if lowercase */
-    if (receivedChar >= 'a' && receivedChar <= 'z')
+    /* Wait for a character from UART1 */
+    receivedChar = UART1_ReceiveChar();
+    if (!receivedChar)
     {
-      receivedChar = receivedChar - 32; /* Convert to uppercase */
+      printf("Error receiving character!\r\n");
     }
 
-    /* Process the command */
-    LED_SetColor(receivedChar);
+    /* Echo the character back to PuTTY */
+    UART1_SendChar(receivedChar);
+    UART1_SendString("\r\n"); /* New line for better readability */
+
+    /* Check for buzzer commands (a, b, c, d) */
+    if (receivedChar == 'A' || receivedChar == 'a')
+    {
+      buzzer_test(); /* Buzzer beep for 1 second */
+    }
+    else if (receivedChar == 'B' || receivedChar == 'b')
+    {
+      /* Turn on Blue LED for 1 second */
+      DIO_WritePin(LED_PORT, BLUE_LED, HIGH);
+      SysCtlDelay(5333333); /* 1 second at 16MHz */
+      DIO_WritePin(LED_PORT, BLUE_LED, LOW);
+    }
+    else if (receivedChar == 'C' || receivedChar == 'c')
+    {
+      /* Turn on Red LED for 1 second */
+      DIO_WritePin(LED_PORT, RED_LED, HIGH);
+      SysCtlDelay(5333333); /* 1 second at 16MHz */
+      DIO_WritePin(LED_PORT, RED_LED, LOW);
+    }
+    else if (receivedChar == 'D' || receivedChar == 'd')
+    {
+      /* Turn on Green LED for 1 second */
+      DIO_WritePin(LED_PORT, GREEN_LED, HIGH);
+      SysCtlDelay(5333333); /* 1 second at 16MHz */
+      DIO_WritePin(LED_PORT, GREEN_LED, LOW);
+    }
   }
 }
 
@@ -133,88 +152,4 @@ void LED_Init(void)
   DIO_WritePin(LED_PORT, RED_LED, LOW);
   DIO_WritePin(LED_PORT, BLUE_LED, LOW);
   DIO_WritePin(LED_PORT, GREEN_LED, LOW);
-}
-
-/*
- * LED_SetColor
- * Sets the LED color based on the received command.
- *
- * Parameters:
- *   command - Color command character (R, G, B, P, Y, C, W, O)
- */
-void LED_SetColor(char command)
-{
-  /* Turn off all LEDs first */
-  DIO_WritePin(LED_PORT, RED_LED, LOW);
-  DIO_WritePin(LED_PORT, BLUE_LED, LOW);
-  DIO_WritePin(LED_PORT, GREEN_LED, LOW);
-
-  /* Set color based on command */
-  switch (command)
-  {
-  case 'R': /* Red */
-    DIO_WritePin(LED_PORT, RED_LED, HIGH);
-    break;
-
-  case 'G': /* Green */
-    DIO_WritePin(LED_PORT, GREEN_LED, HIGH);
-    break;
-
-  case 'B': /* Blue */
-    DIO_WritePin(LED_PORT, BLUE_LED, HIGH);
-    break;
-
-  case 'P': /* Purple (Red + Blue) */
-    DIO_WritePin(LED_PORT, RED_LED, HIGH);
-    DIO_WritePin(LED_PORT, BLUE_LED, HIGH);
-    break;
-
-  case 'Y': /* Yellow (Red + Green) */
-    DIO_WritePin(LED_PORT, RED_LED, HIGH);
-    DIO_WritePin(LED_PORT, GREEN_LED, HIGH);
-    break;
-
-  case 'C': /* Cyan (Blue + Green) */
-    DIO_WritePin(LED_PORT, BLUE_LED, HIGH);
-    DIO_WritePin(LED_PORT, GREEN_LED, HIGH);
-    break;
-
-  case 'W': /* White (All LEDs) */
-    DIO_WritePin(LED_PORT, RED_LED, HIGH);
-    DIO_WritePin(LED_PORT, BLUE_LED, HIGH);
-    DIO_WritePin(LED_PORT, GREEN_LED, HIGH);
-    break;
-
-  case 'O': /* Off (All LEDs off) */
-    /* Already turned off above */
-    break;
-
-  default:
-    /* Invalid command - do nothing */
-    break;
-  }
-}
-
-void LED_SetStatus(char command)
-{
-  /* Turn off all LEDs first */
-  DIO_WritePin(LED_PORT, RED_LED, LOW);
-  DIO_WritePin(LED_PORT, BLUE_LED, LOW);
-  DIO_WritePin(LED_PORT, GREEN_LED, LOW);
-
-  /* Set status based on command */
-  switch (command)
-  {
-  case 'T': /* Door opened - Green */
-    DIO_WritePin(LED_PORT, GREEN_LED, HIGH);
-    break;
-
-  case 'F': /* Door closed - Red */
-    DIO_WritePin(LED_PORT, RED_LED, HIGH);
-    break;
-
-  default:
-    /* Invalid command - do nothing */
-    break;
-  }
 }
