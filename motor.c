@@ -105,3 +105,19 @@ void motor_turn(void)
     // Stop motor after sequence
     GPIOPinWrite(GPIO_PORTD_BASE, GPIO_PIN_0 | GPIO_PIN_1, 0);
 }
+
+//
+// Function to turn motor right (PD0=1, PD1=0)
+//
+void motor_right(void)
+{
+    GPIOPinWrite(GPIO_PORTD_BASE, GPIO_PIN_0 | GPIO_PIN_1, GPIO_PIN_0);
+}
+
+//
+// Function to turn motor left (PD0=0, PD1=1)
+//
+void motor_left(void)
+{
+    GPIOPinWrite(GPIO_PORTD_BASE, GPIO_PIN_0 | GPIO_PIN_1, GPIO_PIN_1);
+}

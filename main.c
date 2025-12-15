@@ -1,74 +1,32 @@
+/******************************************************************************
+ * File: main.c
+ * Project: Buzzer and Motor Control via UART (TivaWare Version)
+ * Description: TivaC receives commands via UART from another TivaC and
+ *              controls buzzer and motor accordingly.
+ * Author: Ahmedhh
+ * Date: December 10, 2025
+ *
+ * Configuration:
+ *   - UART2: 115200 baud, 8N1 (PD6: RX, PD7: TX)
+ *   - Buzzer on PA3
+ *   - Motor on PD0 (IN1), PD1 (IN2)
+ *
+ * Commands:
+ *   A - Buzzer beep (1 second)
+ *   B - Motor turn right
+ *   C - Motor turn left
+ *   M - Motor sequence (right -> delay -> left)
+ ******************************************************************************/
+
 #include <stdint.h>
 #include <stdbool.h>
 #include "inc/hw_memmap.h"
 #include "inc/hw_types.h"
 #include "driverlib/sysctl.h"
 #include "driverlib/gpio.h"
+#include "uart.h"
 #include "buzzer.h"
 #include "motor.h"
-
-// int main(void)
-// {
-//   //
-//   // Set the clocking to run at 16 MHz from the main oscillator.
-//   //
-//   SysCtlClockSet(SYSCTL_SYSDIV_1 | SYSCTL_USE_OSC | SYSCTL_XTAL_16MHZ |
-//                  SYSCTL_OSC_MAIN);
-
-//   // Initialize buzzer (and ensure it is OFF)
-//   enable_buzzer();
-
-//   enable_motor();
-//   while (1)
-//   {
-//     buzzer_test();
-//     SysCtlDelay(5333333); // Wait 1 second between tests
-//     motor_turn();
-//     SysCtlDelay(5333333); // Wait 1 second before repeating
-//   }
-// }
-// #if 0
-/******************************************************************************
- * File: main.c
- * Project: UART1 Control Demo (TivaWare Version)
- * Description: TivaC receives commands via UART1 and controls buzzer and RGB LED.
- *              This version uses TivaWare peripheral driver library.
- * Author: Ahmedhh
- * Date: December 10, 2025
- *
- * Configuration:
- *   - UART17: 115200 baud, 8N1 (PE0: RX, PE1: TX)
- *   - RGB LED on Port F (PF1: Red, PF2: Blue, PF3: Green)
- *   - Buzzer on PA3
- *
- * Commands:
- *   A - Buzzer beep (1 second)
- *   B - Blue LED (1 second)
- *   C - Red LED (1 second)
- *   D - Green LED (1 second)
- ******************************************************************************/
-
-#include "UART.h"
-#include "dio.h"
-#include "systick.h"
-#include "buzzer.h"
-#include <stdint.h>
-
-/******************************************************************************
- *                              Definitions                                    *
- ******************************************************************************/
-
-/* LED Pin Definitions (Port F) */
-#define LED_PORT PORTF
-#define RED_LED PIN1
-#define BLUE_LED PIN2
-#define GREEN_LED PIN3
-
-/******************************************************************************
- *                          Function Prototypes                                *
- ******************************************************************************/
-
-void LED_Init(void);
 
 /******************************************************************************
  *                              Main Function                                  *
@@ -78,78 +36,49 @@ int main(void)
 {
   char receivedChar;
 
-  /* Initialize peripherals */
-  SysTick_Init(16000, SYSTICK_NOINT); /* Initialize system tick timer */
-  UART1_Init();                       /* Initialize UART13 at 115200 baud (TivaWare) */
-  LED_Init();                         /* Initialize RGB LED on Port F */
-  enable_buzzer();                    /* Initialize Buzzer on PA3 */
+  /* Set the clocking to run at 16 MHz from the main oscillator */
+  SysCtlClockSet(SYSCTL_SYSDIV_1 | SYSCTL_USE_OSC | SYSCTL_XTAL_16MHZ |
+                 SYSCTL_OSC_MAIN);
 
-  /* Send welcome message to PuTTY */
-  UART1_SendString("\r\n*** TivaC UART1 Control Demo (TivaWare) ***\r\n");
-  UART1_SendString("Commands: A=Buzzer, B=Blue, C=Red, D=Green\r\n");
-  UART1_SendString("Ready to receive commands...\r\n\r\n");
+  /* Initialize peripherals */
+  UART1_Init();    /* Initialize UART2 at 115200 baud */
+  enable_buzzer(); /* Initialize Buzzer on PA3 */
+  enable_motor();  /* Initialize Motor on PD0, PD1 */
+
+  /* Send ready message */
+  UART1_SendString("\r\n*** TivaC Ready ***\r\n");
 
   /* Main loop */
   while (1)
   {
-    /* Wait for a character from UART1 */
+    /* Wait for a character from UART */
     receivedChar = UART1_ReceiveChar();
-    if (!receivedChar)
-    {
-      printf("Error receiving character!\r\n");
-    }
 
-    /* Echo the character back to PuTTY */
+    /* Quick buzzer beep to confirm character received */
+    GPIOPinWrite(GPIO_PORTA_BASE, GPIO_PIN_3, GPIO_PIN_3);
+    SysCtlDelay(533333); /* 0.1 second beep */
+    GPIOPinWrite(GPIO_PORTA_BASE, GPIO_PIN_3, 0);
+
+    /* Echo the character back */
     UART1_SendChar(receivedChar);
-    UART1_SendString("\r\n"); /* New line for better readability */
+    UART1_SendString("\r\n");
 
-    /* Check for buzzer commands (a, b, c, d) */
+    /* Process commands */
     if (receivedChar == 'A' || receivedChar == 'a')
     {
       buzzer_test(); /* Buzzer beep for 1 second */
     }
     else if (receivedChar == 'B' || receivedChar == 'b')
     {
-      /* Turn on Blue LED for 1 second */
-      DIO_WritePin(LED_PORT, BLUE_LED, HIGH);
-      SysCtlDelay(5333333); /* 1 second at 16MHz */
-      DIO_WritePin(LED_PORT, BLUE_LED, LOW);
+      motor_right(); /* Turn motor right */
     }
     else if (receivedChar == 'C' || receivedChar == 'c')
     {
-      /* Turn on Red LED for 1 second */
-      DIO_WritePin(LED_PORT, RED_LED, HIGH);
-      SysCtlDelay(5333333); /* 1 second at 16MHz */
-      DIO_WritePin(LED_PORT, RED_LED, LOW);
+      motor_left(); /* Turn motor left */
     }
     else if (receivedChar == 'D' || receivedChar == 'd')
     {
-      /* Turn on Green LED for 1 second */
-      DIO_WritePin(LED_PORT, GREEN_LED, HIGH);
-      SysCtlDelay(5333333); /* 1 second at 16MHz */
-      DIO_WritePin(LED_PORT, GREEN_LED, LOW);
+      motor_turn(); /* Motor sequence: right -> delay -> left */
     }
   }
-}
-
-/******************************************************************************
- *                          Function Implementations                           *
- ******************************************************************************/
-
-/*
- * LED_Init
- * Initializes the RGB LED pins on Port F as outputs.
- * Note: PF0 is locked by default, but we're only using PF1, PF2, PF3.
- */
-void LED_Init(void)
-{
-  /* Initialize LED pins as outputs */
-  DIO_Init(LED_PORT, RED_LED, OUTPUT);
-  DIO_Init(LED_PORT, BLUE_LED, OUTPUT);
-  DIO_Init(LED_PORT, GREEN_LED, OUTPUT);
-
-  /* Turn off all LEDs initially */
-  DIO_WritePin(LED_PORT, RED_LED, LOW);
-  DIO_WritePin(LED_PORT, BLUE_LED, LOW);
-  DIO_WritePin(LED_PORT, GREEN_LED, LOW);
 }

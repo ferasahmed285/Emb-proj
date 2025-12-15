@@ -5,6 +5,8 @@
 
 void enable_motor(void);
 void motor_turn(void);
+void motor_right(void);
+void motor_left(void);
 uint32_t read_uart_delay(void);
 
 #endif // MOTOR_H
