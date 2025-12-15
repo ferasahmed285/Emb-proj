@@ -1,18 +1,18 @@
-// #include <stdint.h>
-// #include <stdbool.h>
-// #include "inc/hw_memmap.h"
-// #include "inc/hw_types.h"
-// #include "driverlib/sysctl.h"
-// #include "driverlib/gpio.h"
-// #include "buzzer.h"
-// #include "motor.h"
+#include <stdint.h>
+#include <stdbool.h>
+#include "inc/hw_memmap.h"
+#include "inc/hw_types.h"
+#include "driverlib/sysctl.h"
+#include "driverlib/gpio.h"
+#include "buzzer.h"
+#include "motor.h"
 
 // int main(void)
 // {
 //   //
-//   // Set the clocking to run at 50 MHz from the PLL.
+//   // Set the clocking to run at 16 MHz from the main oscillator.
 //   //
-//   SysCtlClockSet(SYSCTL_SYSDIV_4 | SYSCTL_USE_PLL | SYSCTL_XTAL_16MHZ |
+//   SysCtlClockSet(SYSCTL_SYSDIV_1 | SYSCTL_USE_OSC | SYSCTL_XTAL_16MHZ |
 //                  SYSCTL_OSC_MAIN);
 
 //   // Initialize buzzer (and ensure it is OFF)
@@ -22,10 +22,12 @@
 //   while (1)
 //   {
 //     buzzer_test();
-//     SysCtlDelay(16666667);
-//     motor_test();
+//     SysCtlDelay(5333333); // Wait 1 second between tests
+//     motor_turn();
+//     SysCtlDelay(5333333); // Wait 1 second before repeating
 //   }
 // }
+// #if 0
 /******************************************************************************
  * File: main.c
  * Project: UART LED Color Control Demo (TivaWare Version)
@@ -38,7 +40,6 @@
  * Configuration:
  *   - UART3: 115200 baud, 8N1 (PC6: RX, PC7: TX)
  *   - RGB LED on Port F (PF1: Red, PF2: Blue, PF3: Green)
- *   - LCD on Port B
  *
  * Commands:
  *   R - Red
@@ -53,7 +54,6 @@
 
 #include "uart.h"
 #include "dio.h"
-#include "lcd.h"
 #include "systick.h"
 #include <stdint.h>
 
@@ -73,7 +73,6 @@
 
 void LED_Init(void);
 void LED_SetColor(char command);
-void DisplayColorOnLCD(char command);
 
 /******************************************************************************
  *                              Main Function                                  *
@@ -87,14 +86,6 @@ int main(void)
   SysTick_Init(16000, SYSTICK_NOINT); /* Initialize system tick timer */
   UART_Init();                        /* Initialize UART3 at 115200 baud (TivaWare) */
   LED_Init();                         /* Initialize RGB LED on Port F */
-  LCD_Init();                         /* Initialize LCD */
-
-  /* Display welcome message on LCD */
-  LCD_Clear();
-  LCD_SetCursor(0, 0);
-  LCD_WriteString("UART LED Ctrl");
-  LCD_SetCursor(1, 0);
-  LCD_WriteString("TivaWare Ready");
 
   /* Send welcome message to PuTTY */
   UART_SendString("\r\n*** TivaC UART LED Control Demo (TivaWare) ***\r\n");
@@ -119,9 +110,6 @@ int main(void)
 
     /* Process the command */
     LED_SetColor(receivedChar);
-
-    /* Display the color on LCD */
-    DisplayColorOnLCD(receivedChar);
   }
 }
 
@@ -207,13 +195,6 @@ void LED_SetColor(char command)
   }
 }
 
-/*
- * DisplayColorOnLCD
- * Displays the selected color name on the LCD.
- *
- * Parameters:
- *   command - Color command character (R, G, B, P, Y, C, W, O)
- */
 void LED_SetStatus(char command)
 {
   /* Turn off all LEDs first */
@@ -234,38 +215,6 @@ void LED_SetStatus(char command)
 
   default:
     /* Invalid command - do nothing */
-    break;
-  }
-}
-
-/*
- * DisplayStatusOnLCD
- * Displays the door status on the LCD.
- *
- * Parameters:
- *   command - Status command character (T, F)
- */
-void DisplayStatusOnLCD(char command)
-{
-  /* Clear the second line */
-  LCD_SetCursor(1, 0);
-  LCD_WriteString("                "); /* Clear line */
-
-  /* Display status */
-  LCD_SetCursor(1, 0);
-
-  switch (command)
-  {
-  case 'T':
-    LCD_WriteString("Door: Opened");
-    break;
-
-  case 'F':
-    LCD_WriteString("Door: Closed");
-    break;
-
-  default:
-    LCD_WriteString("Invalid Cmd");
     break;
   }
 }

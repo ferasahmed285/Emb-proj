@@ -12,28 +12,28 @@
 void enable_buzzer(void)
 {
     //
-    // Enable GPIO Port B (Buzzer).
+    // Enable GPIO Port A (Buzzer).
     //
-    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOB);
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA);
 
     //
     // Wait for the GPIO module to be ready.
     //
-    while (!SysCtlPeripheralReady(SYSCTL_PERIPH_GPIOB))
+    while (!SysCtlPeripheralReady(SYSCTL_PERIPH_GPIOA))
     {
     }
 
     //
-    // Configure PB7 as an output for the buzzer.
+    // Configure PA3 as an output for the buzzer.
     //
-    GPIOPinTypeGPIOOutput(GPIO_PORTB_BASE, GPIO_PIN_7);
+    GPIOPinTypeGPIOOutput(GPIO_PORTA_BASE, GPIO_PIN_3);
     // High drive strength for buzzer
-    GPIOPadConfigSet(GPIO_PORTB_BASE, GPIO_PIN_7, GPIO_STRENGTH_8MA_SC, GPIO_PIN_TYPE_STD);
+    GPIOPadConfigSet(GPIO_PORTA_BASE, GPIO_PIN_3, GPIO_STRENGTH_8MA_SC, GPIO_PIN_TYPE_STD);
 
     //
     // Explicitly turn off the buzzer to prevent floating state noise.
     //
-    GPIOPinWrite(GPIO_PORTB_BASE, GPIO_PIN_7, 0);
+    GPIOPinWrite(GPIO_PORTA_BASE, GPIO_PIN_3, 0);
 }
 
 //
@@ -42,12 +42,12 @@ void enable_buzzer(void)
 //
 void buzzer_test(void)
 {
-    // Turn on buzzer (PB7 High)
-    GPIOPinWrite(GPIO_PORTB_BASE, GPIO_PIN_7, GPIO_PIN_7);
+    // Turn on buzzer (PA3 High)
+    GPIOPinWrite(GPIO_PORTA_BASE, GPIO_PIN_3, GPIO_PIN_3);
 
     // Delay 1 second
-    SysCtlDelay(16666667);
+    SysCtlDelay(5333333);
 
     // Turn off buzzer
-    GPIOPinWrite(GPIO_PORTB_BASE, GPIO_PIN_7, 0);
+    GPIOPinWrite(GPIO_PORTA_BASE, GPIO_PIN_3, 0);
 }
