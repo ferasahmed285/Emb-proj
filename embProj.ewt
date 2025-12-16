@@ -2848,24 +2848,6 @@
         <name>$PROJ_DIR$\buzzer.h</name>
     </file>
     <file>
-        <name>$PROJ_DIR$\dio.c</name>
-    </file>
-    <file>
-        <name>$PROJ_DIR$\dio.h</name>
-    </file>
-    <file>
-        <name>$PROJ_DIR$\keypad.c</name>
-    </file>
-    <file>
-        <name>$PROJ_DIR$\keypad.h</name>
-    </file>
-    <file>
-        <name>$PROJ_DIR$\lcd.c</name>
-    </file>
-    <file>
-        <name>$PROJ_DIR$\lcd.h</name>
-    </file>
-    <file>
         <name>$PROJ_DIR$\main.c</name>
     </file>
     <file>
@@ -2873,15 +2855,6 @@
     </file>
     <file>
         <name>$PROJ_DIR$\motor.h</name>
-    </file>
-    <file>
-        <name>$PROJ_DIR$\systick.c</name>
-    </file>
-    <file>
-        <name>$PROJ_DIR$\systick.h</name>
-    </file>
-    <file>
-        <name>$PROJ_DIR$\tm4c123gh6pm.h</name>
     </file>
     <file>
         <name>$PROJ_DIR$\uart.c</name>

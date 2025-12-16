@@ -50,14 +50,14 @@ uint32_t read_uart_delay(void)
     uint32_t delay_seconds = 5; // Default 5 seconds
 
     // Read first digit
-    receivedChar = UART_ReceiveChar();
+    receivedChar = UART2_ReceiveChar();
 
     if (receivedChar >= '0' && receivedChar <= '9')
     {
         delay_seconds = receivedChar - '0';
 
         // Check for second digit (for values 10-30)
-        receivedChar = UART_ReceiveChar();
+        receivedChar = UART2_ReceiveChar();
 
         if (receivedChar >= '0' && receivedChar <= '9')
         {

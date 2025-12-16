@@ -1,12 +1,12 @@
 /******************************************************************************
  * File: uart.c
  * Module: UART (Universal Asynchronous Receiver/Transmitter)
- * Description: Source file for TM4C123GH6PM UART1 Driver (TivaWare)
+ * Description: Source file for TM4C123GH6PM UART2 Driver (TivaWare)
  * Author: Ahmedhh
  * Date: December 10, 2025
  *
  * Configuration:
- *   - UART1 (PB0: RX, PB1: TX)
+ *   - UART2 (PD6: RX, PD7: TX)
  *   - Baud Rate: 115200
  *   - Data: 8 bits
  *   - Parity: None
@@ -42,8 +42,8 @@
  ******************************************************************************/
 
 /*
- * UART1_Init
- * Initializes UART1 with 115200 baud rate, 8N1 configuration using TivaWare.
+ * UART2_Init
+ * Initializes UART2 with 115200 baud rate, 8N1 configuration using TivaWare.
  *
  * TivaWare functions used:
  *   - SysCtlPeripheralEnable(): Enable peripheral clocks
@@ -52,11 +52,11 @@
  *   - UARTConfigSetExpClk(): Configure UART parameters
  *   - UARTEnable(): Enable UART module
  */
-void UART1_Init(void)
+void UART2_Init(void)
 {
     uint32_t systemClockHz = SysCtlClockGet();
 
-    /* 1. Enable peripheral clocks for UART1 and GPIOB */
+    /* 1. Enable peripheral clocks for UART2 and GPIOD */
     SysCtlPeripheralEnable(SYSCTL_PERIPH_UART2);
     SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOD);
 
@@ -72,8 +72,8 @@ void UART1_Init(void)
     HWREG(GPIO_PORTD_BASE + GPIO_O_LOCK) = 0;
 
     /* 2. Configure GPIO pins for UART functionality */
-    /* PB0: U1RX (UART1 Receive) */
-    /* PB1: U1TX (UART1 Transmit) */
+    /* PD6: U2RX (UART2 Receive) */
+    /* PD7: U2TX (UART2 Transmit) */
     GPIOPinConfigure(GPIO_PD6_U2RX);
     GPIOPinConfigure(GPIO_PD7_U2TX);
 
@@ -86,7 +86,7 @@ void UART1_Init(void)
                         (UART_CONFIG_WLEN_8 | UART_CONFIG_STOP_ONE |
                          UART_CONFIG_PAR_NONE));
 
-    /* 4. Enable UART1 */
+    /* 4. Enable UART2 */
     UARTEnable(UART2_BASE);
 }
 
@@ -95,7 +95,7 @@ void UART1_Init(void)
  * Transmits a single character through UART1 using TivaWare.
  * Uses UARTCharPut() which blocks until FIFO has space.
  */
-void UART1_SendChar(char data)
+void UART2_SendChar(char data)
 {
     /* UARTCharPut() blocks until space is available in TX FIFO */
     UARTCharPut(UART2_BASE, data);
@@ -106,7 +106,7 @@ void UART1_SendChar(char data)
  * Receives a single character from UART1 using TivaWare.
  * Uses UARTCharGet() which blocks until data is available.
  */
-char UART1_ReceiveChar(void)
+char UART2_ReceiveChar(void)
 {
     /* UARTCharGet() blocks until data is available in RX FIFO */
     return (char)UARTCharGet(UART2_BASE);
@@ -116,11 +116,11 @@ char UART1_ReceiveChar(void)
  * UART1_SendString
  * Transmits a null-terminated string through UART1.
  */
-void UART1_SendString(const char *str)
+void UART2_SendString(const char *str)
 {
     while (*str != '\0')
     {
-        UART1_SendChar(*str);
+        UART2_SendChar(*str);
         str++;
     }
 }
@@ -130,7 +130,7 @@ void UART1_SendString(const char *str)
  * Checks if data is available in the receive FIFO using TivaWare.
  * Uses UARTCharsAvail() to check RX FIFO status.
  */
-uint8_t UART1_IsDataAvailable(void)
+uint8_t UART2_IsDataAvailable(void)
 {
     /* UARTCharsAvail() returns true if characters are available */
     return (UARTCharsAvail(UART2_BASE)) ? 1U : 0U;
