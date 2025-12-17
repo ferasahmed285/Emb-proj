@@ -1,11 +1,16 @@
+/******************************************************************************
+ * File: motor.c (Control_ECU)
+ * Description: Motor Control with EEPROM Timeout
+ ******************************************************************************/
+
 #include <stdint.h>
 #include <stdbool.h>
 #include "inc/hw_memmap.h"
 #include "inc/hw_types.h"
 #include "driverlib/sysctl.h"
 #include "driverlib/gpio.h"
-#include "uart.h"
 #include "motor.h"
+#include "eeprom.h"
 
 //
 // Function to enable and configure the motor
@@ -23,7 +28,7 @@ void enable_motor(void)
     // Configure PD0 (IN1) and PD1 (IN2) as outputs for the motor
     GPIOPinTypeGPIOOutput(GPIO_PORTD_BASE, GPIO_PIN_0 | GPIO_PIN_1);
 
-    // Increase drive strength to 8mA for motor control pins
+    // Increase drive strength
     GPIOPadConfigSet(GPIO_PORTD_BASE, GPIO_PIN_0 | GPIO_PIN_1, GPIO_STRENGTH_8MA_SC, GPIO_PIN_TYPE_STD);
 
     // Initialize Motor: Stopped (IN1=0, IN2=0)
@@ -31,45 +36,31 @@ void enable_motor(void)
 }
 
 //
-// Motor sequence: Turn right (1s) -> Wait (UART delay) -> Turn left (1s)
+// Motor sequence: Turn right -> Wait (Variable Timeout) -> Turn left
 //
 void motor_sequence(void)
 {
-    // char receivedChar;
-    // uint32_t delay_seconds = 5; // Default 5 seconds
+    // Read timeout from EEPROM (Returns 5-30, or 10 default)
+    uint8_t delay_seconds = EEPROM_ReadTimeout();
 
-    // // Read first digit from UART
-    // receivedChar = UART2_ReceiveChar();
-
-    // if (receivedChar >= '0' && receivedChar <= '9')
-    // {
-    //     delay_seconds = receivedChar - '0';
-
-    //     // Check for second digit (for values 10-30)
-    //     receivedChar = UART2_ReceiveChar();
-
-    //     if (receivedChar >= '0' && receivedChar <= '9')
-    //     {
-    //         delay_seconds = delay_seconds * 10 + (receivedChar - '0');
-    //     }
-    // }
-
-    // // Clamp to 5-30 second range
-    // if (delay_seconds < 5)
-    //     delay_seconds = 5;
-    // if (delay_seconds > 30)
-    //     delay_seconds = 30;
-
-    // 1. Turn Right (PD0=1, PD1=0)
+    // 1. Turn Right (Unlocking)
+    // PD0=1, PD1=0
     GPIOPinWrite(GPIO_PORTD_BASE, GPIO_PIN_0 | GPIO_PIN_1, GPIO_PIN_0);
     SysCtlDelay(5333333); // 1 second at 16MHz
 
-    // 2. Stop motor and wait for delay
+    // 2. Stop motor and wait for configured timeout
     GPIOPinWrite(GPIO_PORTD_BASE, GPIO_PIN_0 | GPIO_PIN_1, 0);
-    // SysCtlDelay(delay_seconds * 5333333); // Variable delay
-    SysCtlDelay(5333333); // 1 second at 16MHz
 
-    // 3. Turn Left (PD0=0, PD1=1)
+    // SysCtlDelay is 3 cycles. 16MHz/3 approx 5333333 per second.
+    // Loop delay based on seconds
+    uint8_t i;
+    for (i = 0; i < delay_seconds; i++)
+    {
+        SysCtlDelay(5333333);
+    }
+
+    // 3. Turn Left (Locking)
+    // PD0=0, PD1=1
     GPIOPinWrite(GPIO_PORTD_BASE, GPIO_PIN_0 | GPIO_PIN_1, GPIO_PIN_1);
     SysCtlDelay(5333333); // 1 second at 16MHz
 

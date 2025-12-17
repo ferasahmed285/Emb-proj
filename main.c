@@ -1,11 +1,12 @@
 /******************************************************************************
  * File: main.c (Control_ECU)
- * FIXED: Flush UART buffer and send response immediately
+ * Description: Logic for PWD, CHK, SET, ALM, TMO
  ******************************************************************************/
 
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
+#include <stdlib.h> // For atoi
 #include "inc/hw_memmap.h"
 #include "inc/hw_types.h"
 #include "driverlib/sysctl.h"
@@ -15,7 +16,6 @@
 #include "buzzer.h"
 #include "eeprom.h"
 
-#define CORRECT_PASSWORD "12345"
 #define PASSWORD_LENGTH 5
 #define BUFFER_SIZE 32
 
@@ -23,9 +23,10 @@
  * Function Prototypes
  ******************************************************************************/
 bool ValidatePassword(const char *received_password);
-void ProcessPasswordCommand(const char *buffer);
-void ExtractPassword(const char *buffer, char *password);
-void FlushUARTBuffer(void); // ← ADDED
+void SavePassword(const char *received_password);
+void ProcessCommand(const char *buffer);
+void ExtractData(const char *buffer, char *data);
+void FlushUARTBuffer(void);
 
 /******************************************************************************
  * Main Function
@@ -36,70 +37,36 @@ int main(void)
     char buffer[BUFFER_SIZE];
     uint8_t bufferIndex = 0;
 
-    /* Set clock to 16 MHz */
     SysCtlClockSet(SYSCTL_SYSDIV_1 | SYSCTL_USE_OSC |
                    SYSCTL_XTAL_16MHZ | SYSCTL_OSC_MAIN);
 
-    /* Initialize peripherals */
     SysTick_Init(16000, SYSTICK_NOINT);
     UART2_Init();
     EEPROM_Init();
     enable_motor();
     enable_buzzer();
 
-    /* Clear buffer */
     memset(buffer, 0, BUFFER_SIZE);
-
-    /* DON'T send ready message - HMI might read it! */
-    /* Or wait for HMI to be ready first */
-    DelayMs(100);
-
-    /* Flush any startup garbage */
-    FlushUARTBuffer(); // ← ADDED
+    FlushUARTBuffer();
 
     while (1)
     {
-        /* Check for UART data */
         if (UART2_IsDataAvailable())
         {
             receivedChar = UART2_ReceiveChar();
-
-            /* Store character in buffer */
             if (bufferIndex < (BUFFER_SIZE - 1))
             {
                 buffer[bufferIndex++] = receivedChar;
                 buffer[bufferIndex] = '\0';
-
-                /* Check for end of command (newline) */
                 if (receivedChar == '\n' || receivedChar == '\r')
                 {
-                    /* Check if this is a password command */
-                    if (strstr(buffer, "PWD:") != NULL)
-                    {
-                        ProcessPasswordCommand(buffer);
-                    }
-                    /* Check for single char commands */
-                    else if (buffer[0] == '0')
-                    {
-                        /* Buzzer command */
-                        UART2_SendChar('0');
-                        alarm();
-                    }
-                    else if (buffer[0] == '1')
-                    {
-                        /* Motor command */
-                        UART2_SendChar('1');
-                        motor_sequence();
-                    }
-
-                    /* Reset buffer */
+                    ProcessCommand(buffer);
                     bufferIndex = 0;
                     memset(buffer, 0, BUFFER_SIZE);
                 }
             }
             else
             {
-                /* Buffer overflow - reset */
                 bufferIndex = 0;
                 memset(buffer, 0, BUFFER_SIZE);
             }
@@ -108,104 +75,128 @@ int main(void)
 }
 
 /******************************************************************************
- * ProcessPasswordCommand
- * FIXED: Send response IMMEDIATELY before any action
+ * ProcessCommand
+ * Protocol:
+ * "STS"        -> '1' (Exists) / '0' (Empty)
+ * "SET:xxxxx"  -> Save Pass
+ * "CHK:xxxxx"  -> Verify Only
+ * "PWD:xxxxx"  -> Verify + Motor (No Alarm on fail)
+ * "ALM"        -> Trigger Buzzer
+ * "TMO:xx"     -> Save Timeout
  ******************************************************************************/
-void ProcessPasswordCommand(const char *buffer)
+void ProcessCommand(const char *buffer)
 {
-    char received_password[PASSWORD_LENGTH + 1];
+    char extracted_data[BUFFER_SIZE];
+    ExtractData(buffer, extracted_data);
 
-    /* Extract password from "PWD:12345\n" */
-    ExtractPassword(buffer, received_password);
-
-    /* Validate password */
-    if (ValidatePassword(received_password))
+    /* STS: Status */
+    if (strstr(buffer, "STS") != NULL)
     {
-        /* ✅ PASSWORD CORRECT */
-
-        /* CRITICAL: Send response IMMEDIATELY */
-        UART2_SendChar('1');
-
-        /* Wait for transmission to complete */
-        DelayMs(50);
-
-        /* Run motor sequence (open door) */
-        motor_sequence();
+        if (EEPROM_IsPasswordSet())
+            UART2_SendChar('1');
+        else
+            UART2_SendChar('0');
     }
-    else
+    /* SET: Save Password */
+    else if (strstr(buffer, "SET:") != NULL)
     {
-        /* ❌ PASSWORD WRONG */
-
-        /* CRITICAL: Send response IMMEDIATELY */
-        UART2_SendChar('0');
-
-        /* Wait for transmission to complete */
-        DelayMs(50);
-
-        /* Trigger buzzer alarm */
-        alarm();
+        SavePassword(extracted_data);
+        UART2_SendChar('1');
+    }
+    /* CHK: Verify Only */
+    else if (strstr(buffer, "CHK:") != NULL)
+    {
+        if (ValidatePassword(extracted_data))
+            UART2_SendChar('1');
+        else
+            UART2_SendChar('0');
+    }
+    /* PWD: Open Door (Wait for motor logic) */
+    else if (strstr(buffer, "PWD:") != NULL)
+    {
+        if (ValidatePassword(extracted_data))
+        {
+            UART2_SendChar('1'); // Send ACK first
+            DelayMs(50);
+            motor_sequence(); // Run motor with stored timeout
+        }
+        else
+        {
+            UART2_SendChar('0'); // Just return Fail, HMI handles retry/alarm
+        }
+    }
+    /* ALM: Alarm (Triggered by HMI) */
+    else if (strstr(buffer, "ALM") != NULL)
+    {
+        alarm(); // Buzzer beep 3 times
+    }
+    /* TMO: Set Timeout */
+    else if (strstr(buffer, "TMO:") != NULL)
+    {
+        // Convert extracted data (e.g. "25") to integer
+        int t = atoi(extracted_data);
+        if (t >= 5 && t <= 30)
+        {
+            EEPROM_WriteTimeout((uint8_t)t);
+            UART2_SendChar('1');
+        }
+        else
+        {
+            UART2_SendChar('0');
+        }
     }
 }
 
 /******************************************************************************
- * ExtractPassword
+ * Helper Functions
  ******************************************************************************/
-void ExtractPassword(const char *buffer, char *password)
+void ExtractData(const char *buffer, char *data)
 {
-    uint8_t i, pwd_index = 0;
+    uint8_t i, data_index = 0;
     bool found_colon = false;
-
     for (i = 0; i < BUFFER_SIZE && buffer[i] != '\0'; i++)
     {
-        if (found_colon && buffer[i] >= '0' && buffer[i] <= '9')
+        if (found_colon)
         {
-            if (pwd_index < PASSWORD_LENGTH)
+            // Allow Digits for Password/Timeout
+            if ((buffer[i] >= '0' && buffer[i] <= '9'))
             {
-                password[pwd_index++] = buffer[i];
+                data[data_index++] = buffer[i];
             }
         }
-
         if (buffer[i] == ':')
-        {
             found_colon = true;
-        }
     }
-
-    password[pwd_index] = '\0';
+    data[data_index] = '\0';
 }
 
-/******************************************************************************
- * ValidatePassword
- ******************************************************************************/
+void SavePassword(const char *received_password)
+{
+    uint8_t pwd_bytes[8];
+    uint8_t i;
+    for (i = 0; i < PASSWORD_LENGTH; i++)
+        pwd_bytes[i] = received_password[i];
+    EEPROM_WritePassword(pwd_bytes);
+    EEPROM_MarkPasswordSet();
+}
+
 bool ValidatePassword(const char *received_password)
 {
+    uint8_t stored_password[8];
     uint8_t i;
-
     if (strlen(received_password) != PASSWORD_LENGTH)
-    {
         return false;
-    }
-
+    EEPROM_ReadPassword(stored_password);
     for (i = 0; i < PASSWORD_LENGTH; i++)
     {
-        if (received_password[i] != CORRECT_PASSWORD[i])
-        {
+        if (received_password[i] != stored_password[i])
             return false;
-        }
     }
-
     return true;
 }
 
-/******************************************************************************
- * FlushUARTBuffer
- * Clears any leftover data in UART receive buffer
- ******************************************************************************/
 void FlushUARTBuffer(void)
 {
-    /* Read and discard all pending data */
     while (UART2_IsDataAvailable())
-    {
         UART2_ReceiveChar();
-    }
 }
