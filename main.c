@@ -123,11 +123,11 @@ void ProcessPasswordCommand(const char *buffer)
     {
         /* ✅ PASSWORD CORRECT */
 
-        /* Send single character response */
+        /* CRITICAL: Send response IMMEDIATELY */
         UART2_SendChar('1');
 
         /* Wait for transmission to complete */
-        DelayMs(10);
+        DelayMs(50);
 
         /* Run motor sequence (open door) */
         motor_sequence();
@@ -136,11 +136,11 @@ void ProcessPasswordCommand(const char *buffer)
     {
         /* ❌ PASSWORD WRONG */
 
-        /* Send single character response */
+        /* CRITICAL: Send response IMMEDIATELY */
         UART2_SendChar('0');
 
         /* Wait for transmission to complete */
-        DelayMs(10);
+        DelayMs(50);
 
         /* Trigger buzzer alarm */
         alarm();
