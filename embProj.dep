@@ -43,9 +43,6 @@
             <file>$TOOLKIT_DIR$\config\linker\TexasInstruments\TM4C123GH6.icf</file>
             <file>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\..\ti\TivaWare_C_Series-2.2.0.295\driverlib\sysctl.h</file>
             <file>$PROJ_DIR$\dio.h</file>
-            <file>$TOOLKIT_DIR$\inc\c\DLib_Product_string.h</file>
-            <file>$TOOLKIT_DIR$\inc\c\string.h</file>
-            <file>$TOOLKIT_DIR$\inc\c\ysizet.h</file>
         </outputs>
         <file>
             <name>$PROJ_DIR$\uart.c</name>
@@ -103,7 +100,7 @@
             <inputs>
                 <tool>
                     <name>ICCARM</name>
-                    <file> 21 32 28 38 20 27 39 31 40 12 5 8 0 1 22 29 36 30 25</file>
+                    <file> 21 32 28 20 27 31 12 5 8 22 36 30 25</file>
                 </tool>
             </inputs>
         </file>
