@@ -37,17 +37,29 @@ void enable_buzzer(void)
 }
 
 //
-// Function to test the buzzer
-// Turns on buzzer for 1 second
+// Alarm function: beeps 3 times in a row within 1 second
+// Each beep: 150ms on, 100ms off (except last has no off delay)
 //
-void buzzer_test(void)
+void alarm(void)
 {
-    // Turn on buzzer (PA3 High)
-    GPIOPinWrite(GPIO_PORTA_BASE, GPIO_PIN_3, GPIO_PIN_3);
+    uint8_t i;
 
-    // Delay 1 second
-    SysCtlDelay(5333333);
+    // Beep 3 times
+    for (i = 0; i < 3; i++)
+    {
+        // Turn on buzzer (PA3 High)
+        GPIOPinWrite(GPIO_PORTA_BASE, GPIO_PIN_3, GPIO_PIN_3);
 
-    // Turn off buzzer
-    GPIOPinWrite(GPIO_PORTA_BASE, GPIO_PIN_3, 0);
+        // Beep for ~150ms (800000 cycles at 16MHz ≈ 150ms)
+        SysCtlDelay(800000);
+
+        // Turn off buzzer
+        GPIOPinWrite(GPIO_PORTA_BASE, GPIO_PIN_3, 0);
+
+        // Gap between beeps: ~100ms (533333 cycles)
+        if (i < 2) // No gap after last beep
+        {
+            SysCtlDelay(533333);
+        }
+    }
 }

@@ -2,6 +2,6 @@
 #define BUZZER_H
 
 void enable_buzzer(void);
-void buzzer_test(void);
+void alarm(void);
 
 #endif // BUZZER_H

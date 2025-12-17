@@ -2857,6 +2857,15 @@
         <name>$PROJ_DIR$\motor.h</name>
     </file>
     <file>
+        <name>$PROJ_DIR$\systick.c</name>
+    </file>
+    <file>
+        <name>$PROJ_DIR$\systick.h</name>
+    </file>
+    <file>
+        <name>$PROJ_DIR$\tm4c123gh6pm.h</name>
+    </file>
+    <file>
         <name>$PROJ_DIR$\uart.c</name>
     </file>
     <file>

@@ -94,7 +94,8 @@ void motor_turn(void)
 
     // 2. Wait for calculated delay (Stop motor)
     GPIOPinWrite(GPIO_PORTD_BASE, GPIO_PIN_0 | GPIO_PIN_1, 0);
-    SysCtlDelay(delay_cycles);
+    //  SysCtlDelay(delay_cycles);
+    SysCtlDelay(5333333);
 
     // 3. Output 0 to PD0 and 1 to PD1 (Turn Left)
     GPIOPinWrite(GPIO_PORTD_BASE, GPIO_PIN_0 | GPIO_PIN_1, GPIO_PIN_1);
@@ -120,4 +121,20 @@ void motor_right(void)
 void motor_left(void)
 {
     GPIOPinWrite(GPIO_PORTD_BASE, GPIO_PIN_0 | GPIO_PIN_1, GPIO_PIN_1);
+}
+
+//
+// Function to drive motor forward (same as right: PD0=1, PD1=0)
+//
+void motor_forward(void)
+{
+    GPIOPinWrite(GPIO_PORTD_BASE, GPIO_PIN_0 | GPIO_PIN_1, GPIO_PIN_0);
+}
+
+//
+// Function to stop the motor (PD0=0, PD1=0)
+//
+void motor_stop(void)
+{
+    GPIOPinWrite(GPIO_PORTD_BASE, GPIO_PIN_0 | GPIO_PIN_1, 0);
 }
