@@ -2848,6 +2848,12 @@
         <name>$PROJ_DIR$\buzzer.h</name>
     </file>
     <file>
+        <name>$PROJ_DIR$\eeprom.c</name>
+    </file>
+    <file>
+        <name>$PROJ_DIR$\eeprom.h</name>
+    </file>
+    <file>
         <name>$PROJ_DIR$\main.c</name>
     </file>
     <file>

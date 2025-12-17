@@ -653,7 +653,7 @@
             <data>
                 <extensions></extensions>
                 <cmdline></cmdline>
-                <hasPrio>48</hasPrio>
+                <hasPrio>1</hasPrio>
                 <buildSequence>inputOutputBased</buildSequence>
             </data>
         </settings>
@@ -2092,6 +2092,12 @@
     </file>
     <file>
         <name>$PROJ_DIR$\buzzer.h</name>
+    </file>
+    <file>
+        <name>$PROJ_DIR$\eeprom.c</name>
+    </file>
+    <file>
+        <name>$PROJ_DIR$\eeprom.h</name>
     </file>
     <file>
         <name>$PROJ_DIR$\main.c</name>
