@@ -31,6 +31,8 @@
 void EEPROM_Init(void);
 void EEPROM_WritePassword(uint8_t *password);
 void EEPROM_ReadPassword(uint8_t *password);
+void EEPROM_WriteTimeout(uint8_t timeout_seconds);
+uint8_t EEPROM_ReadTimeout(void);
 bool EEPROM_IsPasswordSet(void);
 void EEPROM_MarkPasswordSet(void);
 

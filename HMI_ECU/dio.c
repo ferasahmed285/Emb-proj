@@ -139,16 +139,6 @@ uint8_t DIO_ReadPin(uint8_t port, uint8_t pin) {
     return ((*GET_GPIO_DATA(port) & (1 << pin)) != 0);
 }
 
-
-/*
- * DIO_TogglePin
- * Toggles the output value of a GPIO pin.
- */
-void DIO_TogglePin(uint8_t port, uint8_t pin) {
-    *GET_GPIO_DATA(port) ^= (1 << pin);
-}
-
-
 /*
  * DIO_SetPUR
  * Enables or disables the internal pull-up resistor on a GPIO pin.
@@ -158,17 +148,5 @@ void DIO_SetPUR(uint8_t port, uint8_t pin, uint8_t enable) {
         *GET_GPIO_PUR(port) |= (1 << pin);
     } else {
         *GET_GPIO_PUR(port) &= ~(1 << pin);
-    }
-}
-
-/*
- * DIO_SetPDR
- * Enables or disables the internal pull-down resistor on a GPIO pin.
- */
-void DIO_SetPDR(uint8_t port, uint8_t pin, uint8_t enable) {
-    if (enable) {
-        *GET_GPIO_PDR(port) |= (1 << pin);
-    } else {
-        *GET_GPIO_PDR(port) &= ~(1 << pin);
     }
 }

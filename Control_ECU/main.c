@@ -10,11 +10,12 @@
 #include "inc/hw_memmap.h"
 #include "inc/hw_types.h"
 #include "driverlib/sysctl.h"
-#include "systick.h"
-#include "uart.h"
-#include "motor.h"
 #include "buzzer.h"
 #include "eeprom.h"
+#include "motor.h"
+#include "systick.h"
+#include "uart.h"
+
 
 #define PASSWORD_LENGTH 5
 #define BUFFER_SIZE 32

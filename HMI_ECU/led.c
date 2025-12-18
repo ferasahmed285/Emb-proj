@@ -38,15 +38,6 @@ void LED_On(LEDColor color)
     }
 }
 
-void LED_Off(LEDColor color)
-{
-    uint8_t mask = LED_PinMask(color);
-    if (mask != 0u)
-    {
-        GPIOPinWrite(GPIO_PORTF_BASE, mask, 0);
-    }
-}
-
 void LED_AllOff(void)
 {
     GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3, 0);

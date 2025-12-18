@@ -1,7 +1,6 @@
 #include <stdint.h>
 #include "tm4c123gh6pm.h"
 #include "systick.h"
-#include "dio.h"
 
 volatile uint32_t msTicks = 0;
 static uint8_t interruptMode = 0;
@@ -37,13 +36,4 @@ void DelayMs(uint32_t ms)
             NVIC_ST_CURRENT_R = 0;
         }
     }
-}
-
-/* SysTick Interrupt Handler */
-void SystickHandler(void)
-{
-    /* Toggle Green LED every SysTick interrupt */
-    DIO_TogglePin(PORTF, PIN3);
-    DIO_TogglePin(PORTF, PIN3);
-    DIO_TogglePin(PORTF, PIN3);
 }

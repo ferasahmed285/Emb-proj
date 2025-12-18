@@ -25,14 +25,8 @@
 #define LCD_CLEAR           0x01    /* Clear display */
 #define LCD_HOME            0x02    /* Return home */
 #define LCD_ENTRY_MODE      0x06    /* Entry mode: increment cursor, no shift */
-#define LCD_DISPLAY_ON      0x0C    /* Display ON, cursor OFF, blink OFF */
-#define LCD_DISPLAY_OFF     0x08    /* Display OFF */
 #define LCD_CURSOR_ON       0x0E    /* Display ON, cursor ON, blink OFF */
-#define LCD_CURSOR_BLINK    0x0F    /* Display ON, cursor ON, blink ON */
-#define LCD_SHIFT_LEFT      0x18    /* Shift display left */
-#define LCD_SHIFT_RIGHT     0x1C    /* Shift display right */
 #define LCD_4BIT_MODE       0x28    /* 4-bit mode, 2 lines, 5x8 font */
-#define LCD_8BIT_MODE       0x38    /* 8-bit mode, 2 lines, 5x8 font */
 
 /* Line addresses for 16x2 LCD */
 #define LCD_LINE1           0x80    /* First line address */

@@ -87,21 +87,9 @@ void DIO_WritePin(uint8_t port, uint8_t pin, uint8_t value);
 uint8_t DIO_ReadPin(uint8_t port, uint8_t pin);
 
 /*
- * DIO_TogglePin
- * Toggles the value of a GPIO pin.
- */
-void DIO_TogglePin(uint8_t port, uint8_t pin);
-
-/*
  * DIO_SetPUR
  * Enables or disables the internal pull-up resistor on a pin.
  */
 void DIO_SetPUR(uint8_t port, uint8_t pin, uint8_t enable);
-
-/*
- * DIO_SetPDR
- * Enables or disables the internal pull-down resistor on a pin.
- */
-void DIO_SetPDR(uint8_t port, uint8_t pin, uint8_t enable);
 
 #endif /* DIO_H_ */
