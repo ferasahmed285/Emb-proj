@@ -2842,34 +2842,43 @@
         </settings>
     </configuration>
     <file>
-        <name>$PROJ_DIR$\buzzer.c</name>
+        <name>$PROJ_DIR$\adc.c</name>
     </file>
     <file>
-        <name>$PROJ_DIR$\buzzer.h</name>
+        <name>$PROJ_DIR$\adc.h</name>
     </file>
     <file>
-        <name>$PROJ_DIR$\eeprom.c</name>
+        <name>$PROJ_DIR$\dio.c</name>
     </file>
     <file>
-        <name>$PROJ_DIR$\eeprom.h</name>
+        <name>$PROJ_DIR$\dio.h</name>
+    </file>
+    <file>
+        <name>$PROJ_DIR$\keypad.c</name>
+    </file>
+    <file>
+        <name>$PROJ_DIR$\keypad.h</name>
+    </file>
+    <file>
+        <name>$PROJ_DIR$\lcd.c</name>
+    </file>
+    <file>
+        <name>$PROJ_DIR$\lcd.h</name>
+    </file>
+    <file>
+        <name>$PROJ_DIR$\led.c</name>
+    </file>
+    <file>
+        <name>$PROJ_DIR$\led.h</name>
     </file>
     <file>
         <name>$PROJ_DIR$\main.c</name>
-    </file>
-    <file>
-        <name>$PROJ_DIR$\motor.c</name>
-    </file>
-    <file>
-        <name>$PROJ_DIR$\motor.h</name>
     </file>
     <file>
         <name>$PROJ_DIR$\systick.c</name>
     </file>
     <file>
         <name>$PROJ_DIR$\systick.h</name>
-    </file>
-    <file>
-        <name>$PROJ_DIR$\tm4c123gh6pm.h</name>
     </file>
     <file>
         <name>$PROJ_DIR$\uart.c</name>

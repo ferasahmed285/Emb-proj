@@ -23,9 +23,9 @@
 
 if ($debugfile -eq "")
 {
-& "C:\Program Files\IAR Systems\Embedded Workbench 9.0\common\bin\cspybat" -f "C:\Users\feras\OneDrive\Desktop\University\2025-2026 Junior\Fall 2025\CSE322 Introduction to Embedded Systems\Project\Emb-proj\tiva_user\settings\embProj.Debug.general.xcl" --backend -f "C:\Users\feras\OneDrive\Desktop\University\2025-2026 Junior\Fall 2025\CSE322 Introduction to Embedded Systems\Project\Emb-proj\tiva_user\settings\embProj.Debug.driver.xcl" 
+& "C:\Program Files\IAR Systems\Embedded Workbench 9.0\common\bin\cspybat" -f "C:\Users\feras\OneDrive\Desktop\University\2025-2026 Junior\Fall 2025\CSE322 Introduction to Embedded Systems\Project\Emb-proj\Control_ECU\settings\embProj.Debug.general.xcl" --backend -f "C:\Users\feras\OneDrive\Desktop\University\2025-2026 Junior\Fall 2025\CSE322 Introduction to Embedded Systems\Project\Emb-proj\Control_ECU\settings\embProj.Debug.driver.xcl" 
 }
 else
 {
-& "C:\Program Files\IAR Systems\Embedded Workbench 9.0\common\bin\cspybat" -f "C:\Users\feras\OneDrive\Desktop\University\2025-2026 Junior\Fall 2025\CSE322 Introduction to Embedded Systems\Project\Emb-proj\tiva_user\settings\embProj.Debug.general.xcl" --debug_file=$debugfile --backend -f "C:\Users\feras\OneDrive\Desktop\University\2025-2026 Junior\Fall 2025\CSE322 Introduction to Embedded Systems\Project\Emb-proj\tiva_user\settings\embProj.Debug.driver.xcl" 
+& "C:\Program Files\IAR Systems\Embedded Workbench 9.0\common\bin\cspybat" -f "C:\Users\feras\OneDrive\Desktop\University\2025-2026 Junior\Fall 2025\CSE322 Introduction to Embedded Systems\Project\Emb-proj\Control_ECU\settings\embProj.Debug.general.xcl" --debug_file=$debugfile --backend -f "C:\Users\feras\OneDrive\Desktop\University\2025-2026 Junior\Fall 2025\CSE322 Introduction to Embedded Systems\Project\Emb-proj\Control_ECU\settings\embProj.Debug.driver.xcl" 
 }
