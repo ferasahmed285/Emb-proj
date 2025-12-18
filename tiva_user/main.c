@@ -27,28 +27,33 @@ void MainMenu(void);
 void OpenDoorSequence(void);
 void ChangePasswordSequence(void);
 void SetTimeoutSequence(void);
-void CollectPassword(char* password);
-void SendCommandToControl(const char* prefix, const char* data);
+void CollectPassword(char *password);
+void SendCommandToControl(const char *prefix, const char *data);
 char CheckSystemStatus(void);
 char WaitForResponse(void);
 void ADC_Init(void);
 uint32_t ADC_Read(void);
+void LED_Init(void);
+void LED_GreenOn(void);
+void LED_RedOn(void);
+void LED_AllOff(void);
 
 /******************************************************************************
  * Main Function
  ******************************************************************************/
-int main(void) 
+int main(void)
 {
     /* Initialize system */
-    SysCtlClockSet(SYSCTL_SYSDIV_1 | SYSCTL_USE_OSC | 
+    SysCtlClockSet(SYSCTL_SYSDIV_1 | SYSCTL_USE_OSC |
                    SYSCTL_XTAL_16MHZ | SYSCTL_OSC_MAIN);
-    
+
     SysTick_Init(16000, SYSTICK_NOINT);
     UART2_Init();
     LCD_Init();
     Keypad_Init();
     ADC_Init(); // Initialize Potentiometer
-    
+    LED_Init(); // Initialize LED
+
     /* Startup Message */
     LCD_Clear();
     LCD_SetCursor(0, 0);
@@ -59,7 +64,7 @@ int main(void)
     SystemLoginSequence();
 
     /* Step 2: Main Menu */
-    while(1) 
+    while (1)
     {
         MainMenu();
     }
@@ -76,9 +81,13 @@ void SystemLoginSequence(void)
     bool access_granted = false;
     uint8_t i;
 
-    while(!access_granted)
+    while (!access_granted)
     {
-        for(i=0; i<PASSWORD_LENGTH+1; i++) { pass1[i]=0; pass2[i]=0; }
+        for (i = 0; i < PASSWORD_LENGTH + 1; i++)
+        {
+            pass1[i] = 0;
+            pass2[i] = 0;
+        }
 
         LCD_Clear();
         LCD_SetCursor(0, 0);
@@ -89,30 +98,66 @@ void SystemLoginSequence(void)
         LCD_Clear();
         LCD_WriteString("Processing...");
 
-        status = CheckSystemStatus(); 
+        status = CheckSystemStatus();
 
-        if (status == '1') {
+        if (status == '1')
+        {
             /* Login Mode */
             SendCommandToControl("CHK:", pass1);
             response = WaitForResponse();
-            if (response == '1') {
-                LCD_Clear(); LCD_WriteString("Welcome Back!"); DelayMs(1000);
+            if (response == '1')
+            {
+                LED_GreenOn();
+                LCD_Clear();
+                LCD_WriteString("Welcome Back!");
+                DelayMs(1000);
                 access_granted = true;
-            } else {
-                LCD_Clear(); LCD_WriteString("Wrong Password"); DelayMs(2000);
+                LED_AllOff();
             }
-        } else {
+            else
+            {
+                LED_RedOn();
+                LCD_Clear();
+                LCD_WriteString("Wrong Password");
+                DelayMs(2000);
+                LED_AllOff();
+            }
+        }
+        else
+        {
             /* Setup Mode */
-            LCD_Clear(); LCD_WriteString("Re-enter to Set:"); LCD_SetCursor(1,0);
+            LCD_Clear();
+            LCD_WriteString("Re-enter to Set:");
+            LCD_SetCursor(1, 0);
             CollectPassword(pass2);
-            if (strcmp(pass1, pass2) == 0) {
+            if (strcmp(pass1, pass2) == 0)
+            {
                 SendCommandToControl("SET:", pass1);
-                if (WaitForResponse() == '1') {
-                    LCD_Clear(); LCD_WriteString("Setup Complete!"); DelayMs(1000);
+                if (WaitForResponse() == '1')
+                {
+                    LED_GreenOn();
+                    LCD_Clear();
+                    LCD_WriteString("Setup Complete!");
+                    DelayMs(1000);
                     access_granted = true;
+                    LED_AllOff();
                 }
-            } else {
-                LCD_Clear(); LCD_WriteString("Mismatch!"); DelayMs(2000);
+                else
+                {
+                    LED_RedOn();
+                    LCD_Clear();
+                    LCD_WriteString("Setup Failed!");
+                    DelayMs(1000);
+                    LED_AllOff();
+                }
+            }
+            else
+            {
+                LED_RedOn();
+                LCD_Clear();
+                LCD_WriteString("Mismatch!");
+                DelayMs(2000);
+                LED_AllOff();
             }
         }
     }
@@ -126,15 +171,28 @@ void MainMenu(void)
     char key = 0;
     LCD_Clear();
     LCD_SetCursor(0, 0);
-    LCD_WriteString("+:Open -:ChgPass");
+    LCD_WriteString("A:Open B:ChgPass");
     LCD_SetCursor(1, 0);
     LCD_WriteString("*:Set Timeout");
 
-    while(1) {
+    while (1)
+    {
         key = Keypad_GetKey();
-        if (key == 'A') { OpenDoorSequence(); break; }
-        else if (key == 'B') { ChangePasswordSequence(); break; }
-        else if (key == '*') { SetTimeoutSequence(); break; }
+        if (key == 'A')
+        {
+            OpenDoorSequence();
+            break;
+        }
+        else if (key == 'B')
+        {
+            ChangePasswordSequence();
+            break;
+        }
+        else if (key == '*')
+        {
+            SetTimeoutSequence();
+            break;
+        }
         DelayMs(50);
     }
 }
@@ -150,7 +208,8 @@ void OpenDoorSequence(void)
 
     while (attempts < 3)
     {
-        for(i=0; i<PASSWORD_LENGTH+1; i++) password[i] = 0;
+        for (i = 0; i < PASSWORD_LENGTH + 1; i++)
+            password[i] = 0;
 
         LCD_Clear();
         LCD_SetCursor(0, 0);
@@ -164,34 +223,43 @@ void OpenDoorSequence(void)
         SendCommandToControl("PWD:", password);
         response = WaitForResponse();
 
-        if (response == '1') 
+        if (response == '1')
         {
+            LED_GreenOn(); // Turn on green LED
             LCD_Clear();
             LCD_SetCursor(0, 0);
             LCD_WriteString("Access Granted");
             LCD_SetCursor(1, 0);
             LCD_WriteString("Door Unlocking");
-            DelayMs(4000); 
-            return; 
-        } 
-        else 
+            DelayMs(3000);
+            LED_AllOff(); // Turn off green LED
+            return;
+        }
+        else
         {
+            LED_RedOn();
             attempts++;
-            if (attempts < 3) {
+            if (attempts < 3)
+            {
                 LCD_Clear();
                 LCD_SetCursor(0, 0);
                 LCD_WriteString("Wrong Password");
                 LCD_SetCursor(1, 0);
                 LCD_WriteString("Try Again");
-                DelayMs(1500); 
-            } else {
-                SendCommandToControl("ALM", ""); 
+                DelayMs(1500);
+                LED_AllOff();
+            }
+            else
+            {
+                SendCommandToControl("ALM", "");
                 LCD_Clear();
                 LCD_SetCursor(0, 0);
                 LCD_WriteString("System Locked!");
                 LCD_SetCursor(1, 0);
                 LCD_WriteString("Wait 20s...");
-                for(i=0; i<20; i++) DelayMs(1000);
+                for (i = 0; i < 20; i++)
+                    DelayMs(1000);
+                LED_AllOff();
             }
         }
     }
@@ -202,9 +270,9 @@ void OpenDoorSequence(void)
  ******************************************************************************/
 void ChangePasswordSequence(void)
 {
-    char old_pass[PASSWORD_LENGTH+1];
-    char new_pass1[PASSWORD_LENGTH+1];
-    char new_pass2[PASSWORD_LENGTH+1];
+    char old_pass[PASSWORD_LENGTH + 1];
+    char new_pass1[PASSWORD_LENGTH + 1];
+    char new_pass2[PASSWORD_LENGTH + 1];
     uint8_t attempts = 0;
     uint8_t i;
     bool old_pass_correct = false;
@@ -213,37 +281,50 @@ void ChangePasswordSequence(void)
     while (attempts < 3)
     {
         // Clear buffer
-        for(i=0; i<PASSWORD_LENGTH+1; i++) old_pass[i]=0;
+        for (i = 0; i < PASSWORD_LENGTH + 1; i++)
+            old_pass[i] = 0;
 
-        LCD_Clear(); 
+        LCD_Clear();
         LCD_SetCursor(0, 0);
-        LCD_WriteString("Enter Old Pass:"); 
-        LCD_SetCursor(1,0);
+        LCD_WriteString("Enter Old Pass:");
+        LCD_SetCursor(1, 0);
         CollectPassword(old_pass);
 
         LCD_Clear();
         LCD_WriteString("Checking...");
 
         SendCommandToControl("CHK:", old_pass);
-        
-        if (WaitForResponse() == '1') {
+
+        if (WaitForResponse() == '1')
+        {
+            LED_GreenOn();
             old_pass_correct = true;
+            LED_AllOff();
             break; // Proceed to Step 2
-        } else {
+        }
+        else
+        {
+            LED_RedOn();
             attempts++;
-            if (attempts < 3) {
+            if (attempts < 3)
+            {
                 LCD_Clear();
                 LCD_WriteString("Wrong Old Pass");
                 DelayMs(1500);
-            } else {
+                LED_AllOff();
+            }
+            else
+            {
                 // 3rd Failure: Alarm + Lockout
-                SendCommandToControl("ALM", ""); 
+                SendCommandToControl("ALM", "");
                 LCD_Clear();
                 LCD_SetCursor(0, 0);
                 LCD_WriteString("System Locked!");
                 LCD_SetCursor(1, 0);
                 LCD_WriteString("Wait 20s...");
-                for(i=0; i<20; i++) DelayMs(1000);
+                for (i = 0; i < 20; i++)
+                    DelayMs(1000);
+                LED_AllOff();
                 return; // Return to Main Menu
             }
         }
@@ -255,42 +336,55 @@ void ChangePasswordSequence(void)
         bool new_pass_set = false;
         while (!new_pass_set)
         {
-            for(i=0; i<PASSWORD_LENGTH+1; i++) { new_pass1[i]=0; new_pass2[i]=0; }
+            for (i = 0; i < PASSWORD_LENGTH + 1; i++)
+            {
+                new_pass1[i] = 0;
+                new_pass2[i] = 0;
+            }
 
-            LCD_Clear(); 
+            LCD_Clear();
             LCD_SetCursor(0, 0);
-            LCD_WriteString("Enter New Pass:"); 
-            LCD_SetCursor(1,0);
+            LCD_WriteString("Enter New Pass:");
+            LCD_SetCursor(1, 0);
             CollectPassword(new_pass1);
 
-            LCD_Clear(); 
+            LCD_Clear();
             LCD_SetCursor(0, 0);
-            LCD_WriteString("Confirm New:"); 
-            LCD_SetCursor(1,0);
+            LCD_WriteString("Confirm New:");
+            LCD_SetCursor(1, 0);
             CollectPassword(new_pass2);
 
-            if (strcmp(new_pass1, new_pass2) == 0) 
+            if (strcmp(new_pass1, new_pass2) == 0)
             {
                 LCD_Clear();
                 LCD_WriteString("Saving...");
                 SendCommandToControl("SET:", new_pass1);
-                
-                if(WaitForResponse() == '1') {
-                    LCD_Clear(); 
-                    LCD_WriteString("Pass Changed!"); 
+
+                if (WaitForResponse() == '1')
+                {
+                    LED_GreenOn();
+                    LCD_Clear();
+                    LCD_WriteString("Pass Changed!");
                     DelayMs(2000);
                     new_pass_set = true;
-                } else {
+                    LED_AllOff();
+                }
+                else
+                {
+                    LED_RedOn();
                     LCD_Clear();
                     LCD_WriteString("Save Error!");
                     DelayMs(2000);
+                    LED_AllOff();
                 }
-            } 
-            else 
+            }
+            else
             {
-                LCD_Clear(); 
-                LCD_WriteString("Mismatch!"); 
+                LED_RedOn();
+                LCD_Clear();
+                LCD_WriteString("Mismatch!");
                 DelayMs(2000);
+                LED_AllOff();
                 // Loop repeats to ask for new password again
             }
         }
@@ -313,20 +407,21 @@ void SetTimeoutSequence(void)
     LCD_Clear();
     LCD_SetCursor(0, 0);
     LCD_WriteString("Adjust Timeout:");
-    
-    while(!confirmed)
+
+    while (!confirmed)
     {
         adc_val = ADC_Read();
         // Map 0-4095 to 5-30 seconds
         timeout_val = 5 + (adc_val * 25) / 4095;
-        
+
         sprintf(str_buffer, "%d Seconds   ", timeout_val);
         LCD_SetCursor(1, 0);
         LCD_WriteString(str_buffer);
-        
+
         key = Keypad_GetKey();
-        if (key == '#') confirmed = true;
-        
+        if (key == '#')
+            confirmed = true;
+
         DelayMs(100);
     }
 
@@ -334,32 +429,46 @@ void SetTimeoutSequence(void)
     LCD_Clear();
     LCD_WriteString("Confirm w/ Pass:");
     DelayMs(1000);
-    
+
     LCD_Clear();
     LCD_WriteString("Enter Password:");
     LCD_SetCursor(1, 0);
-    
-    for(uint8_t i=0; i<PASSWORD_LENGTH+1; i++) password[i]=0;
+
+    for (uint8_t i = 0; i < PASSWORD_LENGTH + 1; i++)
+        password[i] = 0;
     CollectPassword(password);
-    
+
     SendCommandToControl("CHK:", password);
     if (WaitForResponse() == '1')
     {
         sprintf(str_buffer, "TMO:%d", timeout_val);
-        char* ptr = str_buffer;
-        while(*ptr) UART2_SendChar(*ptr++);
+        char *ptr = str_buffer;
+        while (*ptr)
+            UART2_SendChar(*ptr++);
         UART2_SendChar('\n');
-        
-        if (WaitForResponse() == '1') {
-            LCD_Clear(); LCD_WriteString("Timeout Saved!");
-        } else {
-            LCD_Clear(); LCD_WriteString("Save Error!");
+
+        if (WaitForResponse() == '1')
+        {
+            LED_GreenOn();
+            LCD_Clear();
+            LCD_WriteString("Timeout Saved!");
+        }
+        else
+        {
+            LED_RedOn();
+            LCD_Clear();
+            LCD_WriteString("Save Error!");
         }
         DelayMs(1500);
+        LED_AllOff();
     }
     else
     {
-        LCD_Clear(); LCD_WriteString("Wrong Password"); DelayMs(1500);
+        LED_RedOn();
+        LCD_Clear();
+        LCD_WriteString("Wrong Password");
+        DelayMs(1500);
+        LED_AllOff();
     }
 }
 
@@ -381,24 +490,36 @@ uint32_t ADC_Read(void)
 {
     uint32_t adc_value[1];
     ADCProcessorTrigger(ADC0_BASE, 3);
-    while(!ADCIntStatus(ADC0_BASE, 3, false));
+    while (!ADCIntStatus(ADC0_BASE, 3, false))
+        ;
     ADCIntClear(ADC0_BASE, 3);
     ADCSequenceDataGet(ADC0_BASE, 3, adc_value);
     return adc_value[0];
 }
 
-void CollectPassword(char* password)
+void CollectPassword(char *password)
 {
-    char key; uint8_t count = 0;
-    while(count < PASSWORD_LENGTH) {
+    char key;
+    uint8_t count = 0;
+    while (count < PASSWORD_LENGTH)
+    {
         key = Keypad_GetKey();
-        if (key != 0) {
-            if (key == '#') {
-                count = 0; LCD_SetCursor(1, 0); LCD_WriteString("                "); LCD_SetCursor(1, 0);
-                for(uint8_t j=0; j<PASSWORD_LENGTH; j++) password[j] = 0;
-            } else if (key >= '0' && key <= '9') {
+        if (key != 0)
+        {
+            if (key == '#')
+            {
+                count = 0;
+                LCD_SetCursor(1, 0);
+                LCD_WriteString("                ");
+                LCD_SetCursor(1, 0);
+                for (uint8_t j = 0; j < PASSWORD_LENGTH; j++)
+                    password[j] = 0;
+            }
+            else if (key >= '0' && key <= '9')
+            {
                 password[count] = key;
-                LCD_SetCursor(1, count); LCD_WriteChar('*');
+                LCD_SetCursor(1, count);
+                LCD_WriteChar('*');
                 count++;
             }
             DelayMs(300);
@@ -407,33 +528,76 @@ void CollectPassword(char* password)
     }
 }
 
-void SendCommandToControl(const char* prefix, const char* data)
+void SendCommandToControl(const char *prefix, const char *data)
 {
-    while(*prefix) UART2_SendChar(*prefix++);
-    while(*data) UART2_SendChar(*data++);
+    while (*prefix)
+        UART2_SendChar(*prefix++);
+    while (*data)
+        UART2_SendChar(*data++);
     UART2_SendChar('\n');
 }
 
-char CheckSystemStatus(void) {
+char CheckSystemStatus(void)
+{
     uint8_t r = 0;
-    while(r < 5) {
-        while(UART2_IsDataAvailable()) UART2_ReceiveChar();
-        UART2_SendChar('S');UART2_SendChar('T');UART2_SendChar('S');UART2_SendChar('\n');
+    while (r < 5)
+    {
+        while (UART2_IsDataAvailable())
+            UART2_ReceiveChar();
+        UART2_SendChar('S');
+        UART2_SendChar('T');
+        UART2_SendChar('S');
+        UART2_SendChar('\n');
         DelayMs(100);
-        if(UART2_IsDataAvailable()) return UART2_ReceiveChar();
-        DelayMs(200); r++;
+        if (UART2_IsDataAvailable())
+            return UART2_ReceiveChar();
+        DelayMs(200);
+        r++;
     }
     return '0';
 }
 
-char WaitForResponse(void) {
+char WaitForResponse(void)
+{
     uint16_t t = 0;
-    while(t < 5000) {
-        if(UART2_IsDataAvailable()) {
+    while (t < 5000)
+    {
+        if (UART2_IsDataAvailable())
+        {
             char c = UART2_ReceiveChar();
-            if(c=='0'||c=='1') return c;
+            if (c == '0' || c == '1')
+                return c;
         }
-        DelayMs(1); t++;
+        DelayMs(1);
+        t++;
     }
     return 'X';
+}
+
+/******************************************************************************
+ * LED Functions (Green LED on PF3, Red LED on PF1)
+ ******************************************************************************/
+void LED_Init(void)
+{
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
+    while (!SysCtlPeripheralReady(SYSCTL_PERIPH_GPIOF))
+        ;
+    GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3);
+    GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3, 0); // All off
+}
+
+void LED_GreenOn(void)
+{
+    GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_3, GPIO_PIN_3);
+}
+
+void LED_RedOn(void)
+{
+    GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_1, GPIO_PIN_1);
+}
+
+void LED_AllOff(void)
+{
+    /* Turn off all LEDs (Red PF1, Blue PF2, Green PF3) */
+    GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3, 0);
 }
