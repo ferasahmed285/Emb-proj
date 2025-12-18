@@ -11,11 +11,12 @@
 #include "lcd.h"
 #include "keypad.h"
 #include "systick.h"
+#include "adc.h"
 #include "inc/hw_memmap.h"
 #include "inc/hw_types.h"
 #include "driverlib/sysctl.h"
+#include "led.h"
 #include "driverlib/gpio.h"
-#include "driverlib/adc.h"
 
 #define PASSWORD_LENGTH 5
 
@@ -31,13 +32,7 @@ void CollectPassword(char *password);
 void SendCommandToControl(const char *prefix, const char *data);
 char CheckSystemStatus(void);
 char WaitForResponse(void);
-void ADC_Init(void);
-uint32_t ADC_Read(void);
 void LED_Init(void);
-void LED_GreenOn(void);
-void LED_RedOn(void);
-void LED_AllOff(void);
-
 /******************************************************************************
  * Main Function
  ******************************************************************************/
@@ -107,7 +102,7 @@ void SystemLoginSequence(void)
             response = WaitForResponse();
             if (response == '1')
             {
-                LED_GreenOn();
+                LED_On(LED_GREEN);
                 LCD_Clear();
                 LCD_WriteString("Welcome Back!");
                 DelayMs(1000);
@@ -116,7 +111,7 @@ void SystemLoginSequence(void)
             }
             else
             {
-                LED_RedOn();
+                LED_On(LED_RED);
                 LCD_Clear();
                 LCD_WriteString("Wrong Password");
                 DelayMs(2000);
@@ -135,7 +130,7 @@ void SystemLoginSequence(void)
                 SendCommandToControl("SET:", pass1);
                 if (WaitForResponse() == '1')
                 {
-                    LED_GreenOn();
+                    LED_On(LED_GREEN);
                     LCD_Clear();
                     LCD_WriteString("Setup Complete!");
                     DelayMs(1000);
@@ -144,7 +139,7 @@ void SystemLoginSequence(void)
                 }
                 else
                 {
-                    LED_RedOn();
+                    LED_On(LED_RED);
                     LCD_Clear();
                     LCD_WriteString("Setup Failed!");
                     DelayMs(1000);
@@ -153,7 +148,7 @@ void SystemLoginSequence(void)
             }
             else
             {
-                LED_RedOn();
+                LED_On(LED_RED);
                 LCD_Clear();
                 LCD_WriteString("Mismatch!");
                 DelayMs(2000);
@@ -225,7 +220,7 @@ void OpenDoorSequence(void)
 
         if (response == '1')
         {
-            LED_GreenOn(); // Turn on green LED
+            LED_On(LED_GREEN); // Turn on green LED
             LCD_Clear();
             LCD_SetCursor(0, 0);
             LCD_WriteString("Access Granted");
@@ -237,7 +232,7 @@ void OpenDoorSequence(void)
         }
         else
         {
-            LED_RedOn();
+            LED_On(LED_RED);
             attempts++;
             if (attempts < 3)
             {
@@ -297,14 +292,14 @@ void ChangePasswordSequence(void)
 
         if (WaitForResponse() == '1')
         {
-            LED_GreenOn();
+            LED_On(LED_GREEN);
             old_pass_correct = true;
             LED_AllOff();
             break; // Proceed to Step 2
         }
         else
         {
-            LED_RedOn();
+            LED_On(LED_RED);
             attempts++;
             if (attempts < 3)
             {
@@ -362,7 +357,7 @@ void ChangePasswordSequence(void)
 
                 if (WaitForResponse() == '1')
                 {
-                    LED_GreenOn();
+                    LED_On(LED_GREEN);
                     LCD_Clear();
                     LCD_WriteString("Pass Changed!");
                     DelayMs(2000);
@@ -371,7 +366,7 @@ void ChangePasswordSequence(void)
                 }
                 else
                 {
-                    LED_RedOn();
+                    LED_On(LED_RED);
                     LCD_Clear();
                     LCD_WriteString("Save Error!");
                     DelayMs(2000);
@@ -380,7 +375,7 @@ void ChangePasswordSequence(void)
             }
             else
             {
-                LED_RedOn();
+                LED_On(LED_RED);
                 LCD_Clear();
                 LCD_WriteString("Mismatch!");
                 DelayMs(2000);
@@ -449,13 +444,13 @@ void SetTimeoutSequence(void)
 
         if (WaitForResponse() == '1')
         {
-            LED_GreenOn();
+            LED_On(LED_GREEN);
             LCD_Clear();
             LCD_WriteString("Timeout Saved!");
         }
         else
         {
-            LED_RedOn();
+            LED_On(LED_RED);
             LCD_Clear();
             LCD_WriteString("Save Error!");
         }
@@ -464,7 +459,7 @@ void SetTimeoutSequence(void)
     }
     else
     {
-        LED_RedOn();
+        LED_On(LED_RED);
         LCD_Clear();
         LCD_WriteString("Wrong Password");
         DelayMs(1500);
@@ -475,27 +470,7 @@ void SetTimeoutSequence(void)
 /******************************************************************************
  * Helper Functions & Drivers
  ******************************************************************************/
-void ADC_Init(void)
-{
-    SysCtlPeripheralEnable(SYSCTL_PERIPH_ADC0);
-    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOE);
-    GPIOPinTypeADC(GPIO_PORTE_BASE, GPIO_PIN_3);
-    ADCSequenceConfigure(ADC0_BASE, 3, ADC_TRIGGER_PROCESSOR, 0);
-    ADCSequenceStepConfigure(ADC0_BASE, 3, 0, ADC_CTL_CH0 | ADC_CTL_IE | ADC_CTL_END);
-    ADCSequenceEnable(ADC0_BASE, 3);
-    ADCIntClear(ADC0_BASE, 3);
-}
-
-uint32_t ADC_Read(void)
-{
-    uint32_t adc_value[1];
-    ADCProcessorTrigger(ADC0_BASE, 3);
-    while (!ADCIntStatus(ADC0_BASE, 3, false))
-        ;
-    ADCIntClear(ADC0_BASE, 3);
-    ADCSequenceDataGet(ADC0_BASE, 3, adc_value);
-    return adc_value[0];
-}
+/* ADC_Init and ADC_Read moved to adc.c */
 
 void CollectPassword(char *password)
 {
@@ -577,27 +552,10 @@ char WaitForResponse(void)
 /******************************************************************************
  * LED Functions (Green LED on PF3, Red LED on PF1)
  ******************************************************************************/
-void LED_Init(void)
-{
-    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
-    while (!SysCtlPeripheralReady(SYSCTL_PERIPH_GPIOF))
-        ;
-    GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3);
-    GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3, 0); // All off
-}
+/* LED_Init moved to led.c */
 
-void LED_GreenOn(void)
-{
-    GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_3, GPIO_PIN_3);
-}
+/* LED_AllOff moved to led.c */
 
-void LED_RedOn(void)
-{
-    GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_1, GPIO_PIN_1);
-}
+/* LED_PinMask moved to led.c */
 
-void LED_AllOff(void)
-{
-    /* Turn off all LEDs (Red PF1, Blue PF2, Green PF3) */
-    GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3, 0);
-}
+/* LED_On moved to led.c */

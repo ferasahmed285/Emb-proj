@@ -1379,7 +1379,9 @@
                 </option>
                 <option>
                     <name>CCIncludePath2</name>
-                    <state></state>
+                    <state>C:\ti\TivaWare_C_Series-2.2.0.295</state>
+                    <state>C:\ti\TivaWare_C_Series-2.2.0.295\inc</state>
+                    <state>C:\ti\TivaWare_C_Series-2.2.0.295\driverlib</state>
                 </option>
                 <option>
                     <name>CCStdIncCheck</name>
@@ -1836,7 +1838,7 @@
                 </option>
                 <option>
                     <name>IlinkAdditionalLibs</name>
-                    <state></state>
+                    <state>C:\ti\TivaWare_C_Series-2.2.0.295\driverlib\ewarm\Exe\driverlib.a</state>
                 </option>
                 <option>
                     <name>IlinkOverrideProgramEntryLabel</name>
@@ -2088,6 +2090,12 @@
         </settings>
     </configuration>
     <file>
+        <name>$PROJ_DIR$\adc.c</name>
+    </file>
+    <file>
+        <name>$PROJ_DIR$\adc.h</name>
+    </file>
+    <file>
         <name>$PROJ_DIR$\buzzer.c</name>
     </file>
     <file>
@@ -2116,6 +2124,12 @@
     </file>
     <file>
         <name>$PROJ_DIR$\lcd.h</name>
+    </file>
+    <file>
+        <name>$PROJ_DIR$\led.c</name>
+    </file>
+    <file>
+        <name>$PROJ_DIR$\led.h</name>
     </file>
     <file>
         <name>$PROJ_DIR$\main.c</name>

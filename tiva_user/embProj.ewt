@@ -2842,6 +2842,12 @@
         </settings>
     </configuration>
     <file>
+        <name>$PROJ_DIR$\adc.c</name>
+    </file>
+    <file>
+        <name>$PROJ_DIR$\adc.h</name>
+    </file>
+    <file>
         <name>$PROJ_DIR$\buzzer.c</name>
     </file>
     <file>
@@ -2870,6 +2876,12 @@
     </file>
     <file>
         <name>$PROJ_DIR$\lcd.h</name>
+    </file>
+    <file>
+        <name>$PROJ_DIR$\led.c</name>
+    </file>
+    <file>
+        <name>$PROJ_DIR$\led.h</name>
     </file>
     <file>
         <name>$PROJ_DIR$\main.c</name>
