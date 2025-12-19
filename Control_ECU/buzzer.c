@@ -4,7 +4,47 @@
 #include "inc/hw_types.h"
 #include "driverlib/sysctl.h"
 #include "driverlib/gpio.h"
+#include "driverlib/timer.h"
 #include "buzzer.h"
+
+//
+// Function to initialize GPTM Timer for buzzer delays
+//
+static void buzzer_timer_init(void)
+{
+    // Enable Timer1 peripheral
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_TIMER1);
+    while (!SysCtlPeripheralReady(SYSCTL_PERIPH_TIMER1))
+    {
+    }
+
+    // Configure Timer1 as a 32-bit periodic timer
+    TimerConfigure(TIMER1_BASE, TIMER_CFG_PERIODIC);
+}
+
+//
+// Function to delay using GPTM Timer (in milliseconds)
+//
+static void buzzer_delay_ms(uint32_t milliseconds)
+{
+    // Calculate timer load value for millisecond delay
+    // System clock / 1000 gives ticks per millisecond
+    uint32_t load_value = (SysCtlClockGet() / 1000) * milliseconds;
+
+    // Set timer load value
+    TimerLoadSet(TIMER1_BASE, TIMER_A, load_value - 1);
+
+    // Enable the timer
+    TimerEnable(TIMER1_BASE, TIMER_A);
+
+    // Wait for timer to timeout
+    while (TimerValueGet(TIMER1_BASE, TIMER_A) != 0)
+    {
+    }
+
+    // Disable the timer
+    TimerDisable(TIMER1_BASE, TIMER_A);
+}
 
 //
 // Function to enable and configure the buzzer
@@ -34,6 +74,9 @@ void enable_buzzer(void)
     // Explicitly turn off the buzzer to prevent floating state noise.
     //
     GPIOPinWrite(GPIO_PORTA_BASE, GPIO_PIN_3, 0);
+
+    // Initialize GPTM Timer for buzzer delays
+    buzzer_timer_init();
 }
 
 //
@@ -50,16 +93,16 @@ void alarm(void)
         // Turn on buzzer (PA3 High)
         GPIOPinWrite(GPIO_PORTA_BASE, GPIO_PIN_3, GPIO_PIN_3);
 
-        // Beep for ~150ms (800000 cycles at 16MHz ≈ 150ms)
-        SysCtlDelay(800000);
+        // Beep for 150ms using GPTM
+        buzzer_delay_ms(150);
 
         // Turn off buzzer
         GPIOPinWrite(GPIO_PORTA_BASE, GPIO_PIN_3, 0);
 
-        // Gap between beeps: ~100ms (533333 cycles)
+        // Gap between beeps: 100ms using GPTM
         if (i < 2) // No gap after last beep
         {
-            SysCtlDelay(533333);
+            buzzer_delay_ms(100);
         }
     }
 }
