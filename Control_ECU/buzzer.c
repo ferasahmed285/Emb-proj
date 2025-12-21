@@ -18,8 +18,8 @@ static void buzzer_timer_init(void)
     {
     }
 
-    // Configure Timer1 as a 32-bit periodic timer
-    TimerConfigure(TIMER1_BASE, TIMER_CFG_PERIODIC);
+    // Configure Timer1A as one-shot; each delay reloads
+    TimerConfigure(TIMER1_BASE, TIMER_CFG_A_ONE_SHOT);
 }
 
 //
@@ -31,18 +31,20 @@ static void buzzer_delay_ms(uint32_t milliseconds)
     // System clock / 1000 gives ticks per millisecond
     uint32_t load_value = (SysCtlClockGet() / 1000) * milliseconds;
 
-    // Set timer load value
+    // Set timer load value and clear stale flag
     TimerLoadSet(TIMER1_BASE, TIMER_A, load_value - 1);
+    TimerIntClear(TIMER1_BASE, TIMER_TIMA_TIMEOUT);
 
     // Enable the timer
     TimerEnable(TIMER1_BASE, TIMER_A);
 
-    // Wait for timer to timeout
-    while (TimerValueGet(TIMER1_BASE, TIMER_A) != 0)
+    // Wait for timeout flag
+    while (!(TimerIntStatus(TIMER1_BASE, false) & TIMER_TIMA_TIMEOUT))
     {
     }
 
-    // Disable the timer
+    // Clear flag and stop timer
+    TimerIntClear(TIMER1_BASE, TIMER_TIMA_TIMEOUT);
     TimerDisable(TIMER1_BASE, TIMER_A);
 }
 

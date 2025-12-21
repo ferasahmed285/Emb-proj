@@ -24,11 +24,8 @@ static void motor_timer_init(void)
     {
     }
 
-    // Configure Timer0 as a 32-bit periodic timer
-    TimerConfigure(TIMER0_BASE, TIMER_CFG_PERIODIC);
-
-    // Set timer load value for 1 second delay (16MHz system clock)
-    TimerLoadSet(TIMER0_BASE, TIMER_A, SysCtlClockGet() - 1);
+    // Configure Timer0A as one-shot; we reload each second
+    TimerConfigure(TIMER0_BASE, TIMER_CFG_A_ONE_SHOT);
 }
 
 //
@@ -39,19 +36,21 @@ static void motor_delay_seconds(uint8_t seconds)
     uint8_t i;
     for (i = 0; i < seconds; i++)
     {
+        // Load 1s interval and clear any stale flag before starting
+        TimerLoadSet(TIMER0_BASE, TIMER_A, SysCtlClockGet() - 1);
+        TimerIntClear(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
+
         // Enable the timer
         TimerEnable(TIMER0_BASE, TIMER_A);
 
-        // Wait for timer to timeout
-        while (TimerValueGet(TIMER0_BASE, TIMER_A) != 0)
+        // Wait for timeout flag
+        while (!(TimerIntStatus(TIMER0_BASE, false) & TIMER_TIMA_TIMEOUT))
         {
         }
 
-        // Disable the timer
+        // Clear flag and stop timer
+        TimerIntClear(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
         TimerDisable(TIMER0_BASE, TIMER_A);
-
-        // Reload the timer for next iteration
-        TimerLoadSet(TIMER0_BASE, TIMER_A, SysCtlClockGet() - 1);
     }
 }
 
